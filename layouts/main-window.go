@@ -1,4 +1,4 @@
-package customLayouts
+package customToolsLayouts
 
 import (
 	"fyne.io/fyne/v2"

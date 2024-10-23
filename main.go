@@ -1,39 +1,41 @@
 package main
 
 import (
-	"image/color"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	customLayouts "github.com/zerkley/appmydevtools/layouts"
+	"github.com/zerkley/appmydevtools/databases"
+	"github.com/zerkley/appmydevtools/helpers"
+	customToolsLayouts "github.com/zerkley/appmydevtools/layouts"
 	"github.com/zerkley/appmydevtools/views"
 )
 
-func RenderElement(update *fyne.Container, component *fyne.Container) {
-	update.Objects = []fyne.CanvasObject{component}
-	update.Refresh()
-}
-
 func main() {
+	// Inits
 	myApp := app.New()
 	myWindow := myApp.NewWindow("AppmyDevtools")
-	customLayout := &customLayouts.MainWindowLayout{}
+	settings, err := helpers.SettingsLoader()
+
+	if err != nil {
+		fmt.Printf("Error loading settings: %v", err)
+	}
+
+	go databases.MongoAccess(settings.Database.Dev)
+
+	// Components
+	customLayout := &customToolsLayouts.MainWindowLayout{}
 	updatingComponent := views.Home()
 	sideBar := views.Sidebar(updatingComponent)
-	statusBar := container.NewBorder(
+	statusBar := views.StatusBar()
 
-		canvas.NewLine(color.White), nil, nil, nil,
-		canvas.NewText("Status bar", color.White),
-	)
-
-	statusBar.Resize(fyne.NewSize(700, 30))
-
+	// Main Rendering
 	mainContent := container.New(layout.NewHBoxLayout(), sideBar, updatingComponent)
-
 	fullWindow := container.New(customLayout, mainContent, statusBar)
+
+	// Window settings
 	myWindow.Resize(fyne.NewSize(700, 600))
 	myWindow.SetContent(fullWindow)
 	myWindow.ShowAndRun()
